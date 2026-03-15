@@ -87,8 +87,8 @@ func (o *OpenCode) Stop() {
 	defer o.mu.Unlock()
 
 	if o.cmd != nil && o.cmd.Process != nil {
-		o.cmd.Process.Signal(os.Interrupt)
-		o.cmd.Wait()
+		_ = o.cmd.Process.Signal(os.Interrupt)
+		_ = o.cmd.Wait()
 		o.cmd = nil
 	}
 }

@@ -70,7 +70,9 @@ func main() {
 
 	log.Println("Shutting down...")
 	opencodeProc.Stop()
-	mainServer.Close()
+	if err := mainServer.Close(); err != nil {
+		log.Printf("Error closing server: %v", err)
+	}
 }
 
 type Config struct {

@@ -63,7 +63,7 @@ func (m *Manager) ListProjects(w http.ResponseWriter, r *http.Request) {
 		if os.IsNotExist(err) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode([]Project{})
+			_ = json.NewEncoder(w).Encode([]Project{})
 			return
 		}
 		http.Error(w, "Failed to read projects directory", http.StatusInternalServerError)
@@ -83,7 +83,7 @@ func (m *Manager) ListProjects(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(projects)
+	_ = json.NewEncoder(w).Encode(projects)
 }
 
 func (m *Manager) CreateProject(w http.ResponseWriter, r *http.Request) {

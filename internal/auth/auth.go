@@ -41,12 +41,12 @@ func (m *Middleware) LoginPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("error") == "1" {
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(loginPageWithError))
+		_, _ = w.Write([]byte(loginPageWithError))
 		return
 	}
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(loginPage))
+	_, _ = w.Write([]byte(loginPage))
 }
 
 func (m *Middleware) Login(w http.ResponseWriter, r *http.Request) {
