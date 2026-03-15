@@ -1,0 +1,27 @@
+services:
+  opencode-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4096:4096"
+    volumes:
+      - ./projects:/var/opencode/projects
+      - ./config:/config:ro
+    environment:
+      - AUTH_PASSWORD_HASH=${AUTH_PASSWORD_HASH:?Set AUTH_PASSWORD_HASH in .env}
+      - SESSION_SECRET=${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      - SESSION_EXPIRY=${SESSION_EXPIRY:-24h}
+      - LISTEN_ADDR=:4096
+      - INTERNAL_ADDR=127.0.0.1:4097
+      - PROJECTS_DIR=/var/opencode/projects
+      - OPENCODE_PATH=opencode
+      - OPENCODE_ARGS=--model anthropic/claude-sonnet-4-5
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    restart: unless-stopped
+
+networks:
+  default:
+    name: opencode-network
