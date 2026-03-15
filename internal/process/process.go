@@ -11,6 +11,8 @@ import (
 	"sync"
 )
 
+const DefaultOpenCodePath = "/usr/local/bin/opencode"
+
 type OpenCode struct {
 	mu          sync.RWMutex
 	cmd         *exec.Cmd
@@ -22,6 +24,9 @@ type OpenCode struct {
 }
 
 func NewOpenCode(path, projectsDir, addr string, args []string) *OpenCode {
+	if path == "" {
+		path = DefaultOpenCodePath
+	}
 	target, _ := url.Parse("http://" + addr)
 	return &OpenCode{
 		path:        path,

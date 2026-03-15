@@ -18,7 +18,7 @@ import (
 func main() {
 	cfg := loadConfig()
 
-	opencodeProc := process.NewOpenCode(cfg.OpenCodePath, cfg.ProjectsDir, cfg.InternalAddr, cfg.OpenCodeArgs)
+	opencodeProc := process.NewOpenCode("", cfg.ProjectsDir, cfg.InternalAddr, cfg.OpenCodeArgs)
 	projManager := project.NewManagerWithProcess(cfg.ProjectsDir, opencodeProc)
 
 	authMiddleware := auth.NewMiddleware(
@@ -78,7 +78,6 @@ type Config struct {
 	SessionSecret string
 	SessionExpiry time.Duration
 	ProjectsDir   string
-	OpenCodePath  string
 	OpenCodeArgs  []string
 }
 
@@ -90,7 +89,6 @@ func loadConfig() *Config {
 		SessionSecret: os.Getenv("SESSION_SECRET"),
 		SessionExpiry: parseDuration(getEnv("SESSION_EXPIRY", "24h")),
 		ProjectsDir:   getEnv("PROJECTS_DIR", "/var/opencode/projects"),
-		OpenCodePath:  getEnv("OPENCODE_PATH", "opencode"),
 		OpenCodeArgs:  parseArgs(getEnv("OPENCODE_ARGS", "")),
 	}
 }

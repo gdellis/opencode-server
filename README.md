@@ -2,13 +2,15 @@
 
 A secure authentication wrapper for OpenCode's web interface with project management capabilities.
 
+**Extends the official `ghcr.io/anomalyco/opencode` container** - no separate opencode installation needed.
+
 ## Features
 
 - **Custom Login UI** - Clean, modern authentication page
 - **Session Management** - Secure HTTP-only cookies with configurable expiry
 - **Project Management** - Create and switch between projects
 - **Rate Limiting** - Protection against brute-force attacks
-- **Docker Ready** - Production-ready containerized deployment
+- **Single Container** - Extends official opencode image (~70MB total)
 
 ## Quick Start
 
@@ -61,8 +63,7 @@ Access at http://localhost:4096
 | `LISTEN_ADDR` | No | `:4096` | Server listen address |
 | `INTERNAL_ADDR` | No | `127.0.0.1:4097` | Internal opencode address |
 | `PROJECTS_DIR` | No | `/var/opencode/projects` | Projects storage directory |
-| `OPENCODE_PATH` | No | `opencode` | Path to opencode binary |
-| `OPENCODE_ARGS` | No | - | Additional opencode arguments |
+| `OPENCODE_ARGS` | No | - | Additional opencode arguments (e.g., `--model anthropic/claude-sonnet-4-5`) |
 
 ### OpenCode Configuration
 
@@ -112,6 +113,29 @@ curl -X POST http://localhost:4096/api/projects/switch \
   -d '{"name": "my-project"}'
 ```
 
+## Architecture
+
+```
+┌────────────────────────────────────────┐
+│         Docker Container (~70MB)       │
+│                                        │
+│  ┌──────────────────────────────────┐  │
+│  │      Auth Proxy (Go) :4096       │  │
+│  │      - Login page                │  │
+│  │      - Session management        │  │
+│  │      - Project API               │  │
+│  └─────────┬────────────────────────┘  │
+│            │ reverse proxy              │
+│            ▼                            │
+│  ┌──────────────────────────────────┐  │
+│  │   opencode serve :4097           │  │
+│  │   (from base image)              │  │
+│  └──────────────────────────────────┘  │
+│                                        │
+│  /var/opencode/projects/               │
+└────────────────────────────────────────┘
+```
+
 ## HTTPS/SSL
 
 For production, run behind a reverse proxy like Caddy or Nginx with Let's Encrypt:
@@ -154,7 +178,7 @@ server {
 - [ ] Generate strong SESSION_SECRET (32+ random bytes)
 - [ ] Set appropriate SESSION_EXPIRY (e.g., 8h for workday)
 - [ ] Run behind HTTPS reverse proxy
-- [ ] Keep Docker image updated
+- [ ] Keep Docker image updated (`docker compose pull && docker compose up -d --build`)
 - [ ] Review logs regularly for suspicious activity
 - [ ] Use secrets management for API keys
 
@@ -163,12 +187,13 @@ server {
 ### Prerequisites
 
 - Go 1.24+
-- OpenCode installed
+- Docker (for testing with opencode)
 
 ### Run Locally
 
 ```bash
 go mod tidy
+# Requires opencode binary installed
 go run ./cmd/server
 ```
 
@@ -176,6 +201,27 @@ go run ./cmd/server
 
 ```bash
 CGO_ENABLED=0 go build -ldflags="-s -w" -o auth-proxy ./cmd/server
+```
+
+### Build Docker Image
+
+```bash
+docker build -t opencode-server .
+```
+
+## Updating OpenCode
+
+The image uses `ghcr.io/anomalyco/opencode:latest` as base. To update:
+
+```bash
+docker compose pull opencode-server
+docker compose up -d --build
+```
+
+Or pin to a specific version in the Dockerfile:
+
+```dockerfile
+FROM ghcr.io/anomalyco/opencode:0.0.0-beta-202603152037
 ```
 
 ## License

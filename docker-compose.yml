@@ -15,11 +15,9 @@ services:
       - LISTEN_ADDR=:4096
       - INTERNAL_ADDR=127.0.0.1:4097
       - PROJECTS_DIR=/var/opencode/projects
-      - OPENCODE_PATH=opencode
-      - OPENCODE_ARGS=--model anthropic/claude-sonnet-4-5
+      - OPENCODE_ARGS=${OPENCODE_ARGS:-}
     security_opt:
       - no-new-privileges:true
-    read_only: false
     restart: unless-stopped
 
 networks:
