@@ -70,7 +70,9 @@ func main() {
 
 	log.Println("Shutting down...")
 	opencodeProc.Stop()
-	mainServer.Close()
+	if err := mainServer.Close(); err != nil {
+		log.Printf("Error closing server: %v", err)
+	}
 }
 
 type Config struct {
@@ -137,7 +139,7 @@ func parseArgs(s string) []string {
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]bool{"healthy": true})
+	_ = json.NewEncoder(w).Encode(map[string]bool{"healthy": true})
 }
 
 func proxyHandler(opencodeProc *process.OpenCode, w http.ResponseWriter, r *http.Request) {
