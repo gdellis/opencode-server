@@ -11,45 +11,95 @@ A secure authentication wrapper for OpenCode's web interface with project manage
 - **Project Management** - Create and switch between projects
 - **Rate Limiting** - Protection against brute-force attacks
 - **Single Container** - Extends official opencode image (~70MB total)
+- **Easy Setup Script** - One-command configuration
 
 ## Quick Start
 
-### 1. Generate Password Hash
+### Option 1: Automated Setup (Recommended)
 
 ```bash
-# Install htpasswd (apache2-utils)
-# On Ubuntu/Debian:
-sudo apt install apache2-utils
+# Run the setup script
+make setup
+# or: ./setup.sh
 
-# Generate bcrypt hash
-htpasswd -nBC 10 "" | tr -d ':\n' | sed 's/$2y/$2a/'
-# Enter your password when prompted
-# Copy the output (starts with $2a$10$...)
+# Start the server
+make up
+# or: docker compose up -d
+
+# Access at http://localhost:4096
 ```
 
-### 2. Generate Session Secret
+The setup script will:
+1. Prompt for a password (min 8 characters)
+2. Generate bcrypt hash with correct format
+3. Generate session secret
+4. Ask for session expiry duration (default: 24h)
+5. Ask for OpenCode model (default: anthropic/claude-sonnet-4-5)
+6. Optionally configure API keys
+7. Create `.env` file
+
+### Option 2: Manual Setup
+
+#### 1. Install htpasswd
+
+```bash
+# Ubuntu/Debian
+sudo apt install apache2-utils
+
+# macOS
+brew install httpd
+
+# Alpine
+apk add apache2-utils
+```
+
+#### 2. Generate Password Hash
+
+```bash
+# Generate bcrypt hash (outputs $2y$ format)
+htpasswd -nBC 10 "" | tr -d ':\n'
+
+# Then convert to $2a$ format and escape for Docker Compose:
+# Input:  $2y$10$hash...
+# Output: $$2a$$10$$hash...
+# Replace all $ with $$
+```
+
+#### 3. Generate Session Secret
 
 ```bash
 openssl rand -hex 32
 ```
 
-### 3. Configure Environment
+#### 4. Create .env File
 
 ```bash
 cp .env.example .env
-# Edit .env and set:
-# - AUTH_PASSWORD_HASH (from step 1)
-# - SESSION_SECRET (from step 2)
-# - Your API keys (ANTHROPIC_API_KEY, etc.)
+# Edit .env with:
+# - AUTH_PASSWORD_HASH (from step 2, with $$ escaping)
+# - SESSION_SECRET (from step 3)
+# - API keys (optional)
 ```
 
-### 4. Build and Run
+#### 5. Start Server
 
 ```bash
 docker compose up -d --build
 ```
 
 Access at http://localhost:4096
+
+## Available Commands
+
+```bash
+make setup    # Generate .env file with password (first-time setup)
+make up       # Start containers
+make down     # Stop containers
+make logs     # View container logs (follow mode)
+make clean    # Remove containers, volumes, and .env
+make build    # Build Docker image
+make restart  # Rebuild and restart containers
+```
 
 ## Configuration
 
@@ -223,6 +273,42 @@ Or pin to a specific version in the Dockerfile:
 ```dockerfile
 FROM ghcr.io/anomalyco/opencode:0.0.0-beta-202603152037
 ```
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 4096 is in use (e.g., by a running OpenCode instance), modify `docker-compose.yml`:
+
+```yaml
+ports:
+  - "4098:4096"  # Use different external port
+```
+
+### Password Not Working
+
+Ensure the bcrypt hash is correctly formatted:
+- Must use `$2a$` prefix (not `$2b$` or `$2y$`)
+- Must escape `$` as `$$` in `.env` file for Docker Compose
+
+The setup script handles this automatically. For manual setup:
+
+```bash
+# Generate correct format
+echo "your-password" | htpasswd -niBC 10 "" | tr -d ':\n' | sed 's/\$2y\$/\$2a\$/; s/\$/$$/g'
+```
+
+### Container Not Starting
+
+Check logs:
+```bash
+docker compose logs
+```
+
+Common issues:
+- Missing `AUTH_PASSWORD_HASH` or `SESSION_SECRET` in `.env`
+- Invalid bcrypt hash format
+- Port conflicts
 
 ## License
 
