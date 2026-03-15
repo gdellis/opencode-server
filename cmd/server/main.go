@@ -30,23 +30,25 @@ func main() {
 	)
 
 	mux := http.NewServeMux()
+
+	// Public routes (no auth required)
 	mux.HandleFunc("GET /login", authMiddleware.LoginPage)
 	mux.HandleFunc("POST /login", authMiddleware.Login)
 	mux.HandleFunc("GET /logout", authMiddleware.Logout)
 	mux.HandleFunc("GET /api/health", healthHandler)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	protected := http.NewServeMux()
-	protected.HandleFunc("GET /api/projects", projManager.ListProjects)
-	protected.HandleFunc("POST /api/projects", projManager.CreateProject)
-	protected.HandleFunc("POST /api/projects/switch", projManager.SwitchProject)
-	protected.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// Protected routes (auth required)
+	mux.HandleFunc("GET /api/projects", authMiddleware.RequireAuth(http.HandlerFunc(projManager.ListProjects)).ServeHTTP)
+	mux.HandleFunc("POST /api/projects", authMiddleware.RequireAuth(http.HandlerFunc(projManager.CreateProject)).ServeHTTP)
+	mux.HandleFunc("POST /api/projects/switch", authMiddleware.RequireAuth(http.HandlerFunc(projManager.SwitchProject)).ServeHTTP)
+	mux.HandleFunc("/", authMiddleware.RequireAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		proxyHandler(opencodeProc, w, r)
-	})
+	})).ServeHTTP)
 
 	mainServer := &http.Server{
 		Addr:    cfg.ListenAddr,
-		Handler: authMiddleware.RequireAuth(protected),
+		Handler: mux,
 	}
 
 	log.Printf("Starting opencode process on %s", cfg.InternalAddr)

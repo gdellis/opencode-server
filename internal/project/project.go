@@ -70,7 +70,7 @@ func (m *Manager) ListProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var projects []Project
+	projects := make([]Project, 0)
 	for _, entry := range entries {
 		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
 			projects = append(projects, Project{

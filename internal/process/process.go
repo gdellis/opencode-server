@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -18,7 +19,8 @@ type OpenCode struct {
 	cmd         *exec.Cmd
 	path        string
 	projectsDir string
-	addr        string
+	hostname    string
+	port        string
 	args        []string
 	proxy       *httputil.ReverseProxy
 }
@@ -27,14 +29,26 @@ func NewOpenCode(path, projectsDir, addr string, args []string) *OpenCode {
 	if path == "" {
 		path = DefaultOpenCodePath
 	}
+
+	hostname, port := parseAddr(addr)
 	target, _ := url.Parse("http://" + addr)
+
 	return &OpenCode{
 		path:        path,
 		projectsDir: projectsDir,
-		addr:        addr,
+		hostname:    hostname,
+		port:        port,
 		args:        args,
 		proxy:       httputil.NewSingleHostReverseProxy(target),
 	}
+}
+
+func parseAddr(addr string) (hostname, port string) {
+	parts := strings.Split(addr, ":")
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return addr, "4097"
 }
 
 func (o *OpenCode) Start() error {
@@ -49,7 +63,11 @@ func (o *OpenCode) Start() error {
 		return fmt.Errorf("failed to create projects directory: %w", err)
 	}
 
-	args := []string{"serve", "--hostname", o.addr}
+	args := []string{
+		"serve",
+		"--hostname", o.hostname,
+		"--port", o.port,
+	}
 	args = append(args, o.args...)
 
 	o.cmd = exec.Command(o.path, args...)
