@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 6 * * 1' # Weekly on Monday 06:00 UTC
+    - cron: '0 6 * * 1'
 
 permissions:
   contents: read
@@ -21,11 +21,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: github/codeql-action/init@c4fb45df0d9c674a2c4c37c9e2cfc4e2bf9ab16d # v3.28.5
+      - uses: github/codeql-action/init@0952a80decea52ce9d6031fc0693720942efef47 # v3.28.9
         with:
           languages: go
 
-      - uses: github/codeql-action/analyze@c4fb45df0d9c674a2c4c37c9e2cfc4e2bf9ab16d # v3.28.5
+      - uses: github/codeql-action/analyze@0952a80decea52ce9d6031fc0693720942efef47 # v3.28.9
 
   govulncheck:
     name: Go Vulnerabilities
@@ -41,7 +41,7 @@ jobs:
           cache: true
 
       - name: Run govulncheck
-        uses: golang/govulncheck-action@b625048270ac6c5a4cdc11739a3c6a78c2b633b5 # v1.0.0
+        uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
 
   zizmor:
     name: Workflow Security
@@ -52,4 +52,4 @@ jobs:
           persist-credentials: false
 
       - name: Run zizmor
-        uses: zizmorcore/zizmor-action@4e7bb5b31b6d6606350c6c17ecb25b468e8c5781 # v0.1.1
+        uses: zizmorcore/zizmor-action@71321a20a9ded102f6e9ce5718a2fcec2c4f70d8 # v0.5.2
